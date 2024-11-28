@@ -9,10 +9,12 @@ use Illuminate\Support\Facades\Http;
 class PaystackService
 {
     protected $paystackBaseUrl;
+    protected $secretKey; 
 
     public function __construct()
     {
         $this->paystackBaseUrl = 'https://api.paystack.co';
+        $this->secretKey =  env('PAYSTACK_SECRET_KEY');
     }
 
     public function initiateAccountLinking($email, $amount, $callback_url)
@@ -44,5 +46,20 @@ class PaystackService
         }
 
         throw new \Exception('Transaction verification failed: ' . $response->body());
+    }
+
+     public function resolveAccount(string $bankCode, string $accountNumber): array
+    {
+        $response = Http::withToken($this->secretKey)
+            ->get("{$this->paystackBaseUrl}/bank/resolve", [
+                'account_number' => $accountNumber,
+                'bank_code' => $bankCode,
+            ]);
+
+        if ($response->successful()) {
+            return $response->json()['data'];
+        }
+
+        throw new \Exception($response->json()['message'] ?? 'Unable to verify account. Please try again.');
     }
 }

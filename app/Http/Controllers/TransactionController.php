@@ -4,8 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Models\BankAccount;
 use App\Services\PaystackService;
+
 use GuzzleHttp\Client;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 
 class TransactionController extends Controller
 {
@@ -17,10 +19,19 @@ class TransactionController extends Controller
     }
 
     public function link_account(Request $request){
-        $request->validate([
-            'bank_code' => 'required|string',
-            'account_number' => 'required|string|max:10',
-        ]);
+        
+         try {
+            $request->validate([
+                'bank_code' => 'required|string',
+                'account_number' => 'required|string|max:10',
+            ]);
+        } catch (ValidationException $e) {
+            // Return validation error messages
+            return response()->json([
+                'success' => false,
+                'errors' => $e->validator->errors(),
+            ], 422); // Unprocessable Entity status code
+        }
 
         $client = new Client();
         $response = $client->request('GET', 'https://api.paystack.co/bank/resolve', [
@@ -62,6 +73,42 @@ class TransactionController extends Controller
 
         $body = json_decode($response->getBody(), true);
         return response()->json($body['data']);
+    }
+
+
+    public function verifyAccount(Request $request)
+    {
+       
+         try {
+            $request->validate([
+            'bank_code' => 'required|string',
+            'account_number' => 'required|string|max:10',
+        ]);
+        } catch (ValidationException $e) {
+            // Return validation error messages
+            return response()->json([
+                'success' => false,
+                'errors' => $e->validator->errors(),
+            ], 422); // Unprocessable Entity status code
+        }
+
+        try {
+            $data = $this->paystackService->resolveAccount(
+                $request->bank_code,
+                $request->account_number
+            );
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Account verified successfully',
+                'data' => $data,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 400);
+        }
     }
 
 }

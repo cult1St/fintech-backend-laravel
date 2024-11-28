@@ -15,7 +15,8 @@ Route::get('/user', function (Request $request) {
 Route::post('/register', [UserController::class, 'register']);
 Route::post('/login', [UserController::class, 'login']);
 Route::post("/logout", [UserController::class, 'logout']);
-Route::post("/get_banks", [TransactionController::class, "getBanks"]);
+Route::get("/get_banks", [TransactionController::class, "getBanks"]);
+Route::post("/validate_account", [TransactionController::class, "verifyAccount"]);
 
 
 Route::get('is_verified', function(){
@@ -25,5 +26,5 @@ Route::get('is_verified', function(){
 //create authenticated routes
 
 Route::middleware(JWTMiddleware::class)->group(function(){
-    Route::post('dashboard', [UserController::class, 'dashboard']);
+    Route::post('/dashboard', [UserController::class, 'dashboard']);
 });
