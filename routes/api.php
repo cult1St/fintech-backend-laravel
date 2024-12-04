@@ -27,4 +27,5 @@ Route::get('is_verified', function(){
 
 Route::middleware(JWTMiddleware::class)->group(function(){
     Route::post('/dashboard', [UserController::class, 'dashboard']);
+    Route::post("/user/link_bank-account", [TransactionController::class, "link_account"]);
 });
